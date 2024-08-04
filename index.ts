@@ -182,48 +182,35 @@ const main = async () => {
     };
 
     const extLinksObserverConfig = { childList: true, subtree: true };
-    const extLinksObserver = new MutationObserver((mutationsList, observer) => {
+    const extLinksObserver = new MutationObserver(async (mutationsList) => {
         for (const element of mutationsList) {
             const addedNode = element.addedNodes[0] as Element;
             if (addedNode?.childNodes.length) {
                 if (addedNode.querySelector('.external-link')) {
-                    extLinksObserver.disconnect();
-
-                    (async (addedNode) => {
-                        const blockId = addedNode
-                            .querySelectorAll('.block-content')[0]
-                            .getAttribute('blockid');
-                        if (blockId) {
-                            try {
-                                await parseBlockForLink(blockId);
-                                setTimeout(() => {
-                                    addedNode
-                                        .querySelectorAll('.external-link')
-                                        .forEach((extLink) => {
-                                            const extLinkElement =
-                                                extLink as HTMLAnchorElement;
-                                            setFavicon(extLinkElement);
-                                        });
-                                }, 250);
-                            } catch (error) {
-                                console.error('Error in async task:', error);
-                            }
-                        }
-                    })(addedNode);
-
-                    extLinksObserver.observe(
-                        appContainer,
-                        extLinksObserverConfig
-                    );
+                    const blockId = addedNode
+                        .querySelectorAll('.block-content')[0]
+                        .getAttribute('blockid');
+                    if (blockId) {
+                        await parseBlockForLink(blockId);
+                        setTimeout(() => {
+                            addedNode
+                                .querySelectorAll('.external-link')
+                                .forEach((extLink) => {
+                                    const extLinkElement =
+                                        extLink as HTMLAnchorElement;
+                                    setFavicon(extLinkElement);
+                                });
+                        }, 250);
+                    }
                 }
             }
         }
     });
 
     setTimeout(() => {
-        doc.querySelectorAll('.external-link')?.forEach((extLink) =>
-            setFavicon(extLink as HTMLAnchorElement)
-        );
+        doc
+            .querySelectorAll('.external-link')
+            ?.forEach((extLink) => setFavicon(extLink as HTMLAnchorElement));
         extLinksObserver.observe(appContainer, extLinksObserverConfig);
     }, 500);
 
